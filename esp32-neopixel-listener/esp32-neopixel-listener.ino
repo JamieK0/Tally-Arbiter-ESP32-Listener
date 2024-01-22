@@ -6,7 +6,10 @@
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
-
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
 
 String listenerDeviceName = "neoPixel-1";
 
@@ -16,6 +19,7 @@ String listenerDeviceName = "neoPixel-1";
 #define LED_PIN     5
 #define BRIGHTNESS 255 // Set BRIGHTNESS to about 1/5 (max = 255)
 #define LED_COUNT  2
+#define maxTextSize 5 //larger sourceName text
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 // Argument 1 = Number of pixels in NeoPixel strip
@@ -35,11 +39,23 @@ const int led_preview = 26; //OPTIONAL Led for preview on pin G26
 const int led_aux = 36;     //OPTIONAL Led for aux on pin G36
 #endif
 
+bool LAST_MSG = false; // true = show log on tally screen
+
 //Tally Arbiter Server
 char tallyarbiter_host[40] = "192.168.0.120"; //IP address of the Tally Arbiter Server
 char tallyarbiter_port[6] = "4455";
 
 /* END OF USER CONFIG */
+
+// OLED Config
+/* Uncomment the initialize the I2C address , uncomment only one, If you get a totally blank screen try the other*/
+#define i2c_Address 0x3c //initialize with the I2C addr 0x3C Typically eBay OLED's
+//#define i2c_Address 0x3d //initialize with the I2C addr 0x3D Typically Adafruit OLED's
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET -1   //   QT-PY / XIAO
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 
 Preferences preferences;
 
@@ -144,6 +160,18 @@ void setup() {
     });
 
   ArduinoOTA.begin();
+
+display.begin(i2c_Address, true);
+display.display();
+delay(2000);
+// Clear the buffer.
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(0, 0);
+  display.println("Tally Arbiter ESP32 Listener");
+  display.display();
+  display.clearDisplay();
 
   #if TALLY_EXTRA_OUTPUT
   // Enable interal led for program trigger
