@@ -36,7 +36,7 @@ Learn more [here](https://github.com/josephdadams/TallyArbiter).
 ## Installation
 
 ### 3D Printing
-Use the stl or 3mf files in the CAD folder for printing.
+Use the seperate 3mf files in the CAD folder for printing.
 The stl files seperate the top and bottom peices. 
 I printed my case in PLA and it has been working fine.
 The top peice is to be printed in white to act as diffusion for the LEDs.
