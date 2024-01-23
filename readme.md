@@ -1,3 +1,4 @@
+# ESP32 Listener
 An ESP32 listener for Tally Arbiter.
 
 ## Features
@@ -8,7 +9,6 @@ An ESP32 listener for Tally Arbiter.
 
 ## Tally Arbiter
 
-> [!NOTE] Title
 > A camera tally lights project capable of listening/fetching tally data from multiple sources or video switchers and arbitrating whether an end device is considered to be in Preview or Program. Supports many different switcher types and protocols as well as many types of tally output.
 
 Learn more [here](https://github.com/josephdadams/TallyArbiter).
