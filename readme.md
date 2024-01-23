@@ -63,7 +63,9 @@ The ESP32 can slide in on an angle before being pushed against the back of the c
 The neopixels sit above the ESP32.
 Use the appropriately sized hex key to screw the grub screws into the heated inserts, attaching the two peices of the case.
 
-
+## Making your own accessories
+Accessories can be connected using this template:
+![Alt text](<Accessory Template.png>)
 
 ## License
 Distributed under the MIT License.
