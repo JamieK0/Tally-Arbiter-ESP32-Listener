@@ -6,16 +6,21 @@
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
 #include <Preferences.h>
-
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
+#include <Fonts/FreeSans9pt7b.h>
 
 String listenerDeviceName = "neoPixel-1";
 
 /* USER CONFIG VARIABLES
  *  Change the following variables before compiling and sending the code to your device.
  */
-#define LED_PIN     5
-#define BRIGHTNESS 255 // Set BRIGHTNESS to about 1/5 (max = 255)
-#define LED_COUNT  2
+#define LED_PIN 18
+#define BRIGHTNESS 255  // Set BRIGHTNESS to about 1/5 (max = 255)
+#define LED_COUNT 6
+#define maxTextSize 5  //larger sourceName text
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 // Argument 1 = Number of pixels in NeoPixel strip
@@ -31,19 +36,31 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 #if TALLY_EXTRA_OUTPUT
 const int led_program = 10;
-const int led_preview = 26; //OPTIONAL Led for preview on pin G26
-const int led_aux = 36;     //OPTIONAL Led for aux on pin G36
+const int led_preview = 26;  //OPTIONAL Led for preview on pin G26
+const int led_aux = 36;      //OPTIONAL Led for aux on pin G36
 #endif
 
+bool LAST_MSG = true;  // true = show log on tally screen
+
 //Tally Arbiter Server
-char tallyarbiter_host[40] = "192.168.0.120"; //IP address of the Tally Arbiter Server
+char tallyarbiter_host[40] = "192.168.0.120";  //IP address of the Tally Arbiter Server
 char tallyarbiter_port[6] = "4455";
 
 /* END OF USER CONFIG */
 
+// OLED Config
+/* Uncomment the initialize the I2C address , uncomment only one, If you get a totally blank screen try the other*/
+#define i2c_Address 0x3c  //initialize with the I2C addr 0x3C Typically eBay OLED's
+//#define i2c_Address 0x3d //initialize with the I2C addr 0x3D Typically Adafruit OLED's
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 64  // OLED display height, in pixels
+#define OLED_RESET -1     //   QT-PY / XIAO
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
 Preferences preferences;
 
-String prevType = ""; // reduce display flicker by storing previous state
+String prevType = "";  // reduce display flicker by storing previous state
 
 String actualType = "";
 String actualColor = "";
@@ -56,6 +73,7 @@ JSONVar Devices;
 JSONVar DeviceStates;
 String DeviceId = "unassigned";
 String DeviceName = "Unassigned";
+String LastMessage = "";
 
 //General Variables
 bool networkConnected = false;
@@ -63,24 +81,25 @@ bool networkConnected = false;
 #define WHITE strip.Color(255, 255, 255)
 #define BLACK strip.Color(0, 0, 0)
 
-WiFiManager wm; // global wm instance
-WiFiManagerParameter custom_field; // global param ( for non blocking w params )
+WiFiManager wm;                     // global wm instance
+WiFiManagerParameter custom_field;  // global param ( for non blocking w params )
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial)
+    ;
 
   // Initialize the ESP32 object
   logger("Initializing ESP32.", "info-quiet");
 
-  setCpuFrequencyMhz(80);    //Save battery by turning down the CPU clock
-  btStop();                 //Save battery by turning off BlueTooth
+  setCpuFrequencyMhz(80);  //Save battery by turning down the CPU clock
+  btStop();                //Save battery by turning off BlueTooth
 
   uint64_t chipid = ESP.getEfuseMac();
-  listenerDeviceName = "neoPixel-" + String((uint16_t)(chipid>>32)) + String((uint32_t)chipid);
+  listenerDeviceName = "neoPixel-" + String((uint16_t)(chipid >> 32)) + String((uint32_t)chipid);
 
-  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.show();            // Turn OFF all pixels ASAP
+  strip.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();   // Turn OFF all pixels ASAP
   strip.setBrightness(BRIGHTNESS);
   setColor(strip.Color(0, 0, 255));
   logger("Listener device name: " + listenerDeviceName, "info");
@@ -90,27 +109,27 @@ void setup() {
   // added to clear out corrupt prefs
   //preferences.clear();
   logger("Reading preferences", "info-quiet");
-  if(preferences.getString("deviceid").length() > 0){
+  if (preferences.getString("deviceid").length() > 0) {
     DeviceId = preferences.getString("deviceid");
   }
-  if(preferences.getString("devicename").length() > 0){
+  if (preferences.getString("devicename").length() > 0) {
     DeviceName = preferences.getString("devicename");
   }
-  if(preferences.getString("taHost").length() > 0){
+  if (preferences.getString("taHost").length() > 0) {
     String newHost = preferences.getString("taHost");
     logger("Setting TallyArbiter host as" + newHost, "info-quiet");
     newHost.toCharArray(tallyarbiter_host, 40);
   }
-  if(preferences.getString("taPort").length() > 0){
+  if (preferences.getString("taPort").length() > 0) {
     String newPort = preferences.getString("taPort");
     logger("Setting TallyArbiter port as" + newPort, "info-quiet");
     newPort.toCharArray(tallyarbiter_port, 6);
   }
- 
+
   preferences.end();
 
-  delay(100); //wait 100ms before moving on
-  connectToNetwork(); //starts Wifi connection
+  delay(100);          //wait 100ms before moving on
+  connectToNetwork();  //starts Wifi connection
   while (!networkConnected) {
     delay(200);
   }
@@ -122,7 +141,7 @@ void setup() {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";
-      else // U_SPIFFS
+      else  // U_SPIFFS
         type = "filesystem";
 
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
@@ -145,7 +164,28 @@ void setup() {
 
   ArduinoOTA.begin();
 
-  #if TALLY_EXTRA_OUTPUT
+
+  // OLED setup:
+  display.begin(i2c_Address, true);
+  display.display();
+  delay(2000);
+  // Clear the buffer.
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(0, 1);
+  display.println("Tally Arbiter");
+  display.println("developed by Joseph");
+  display.println("Adams.");
+  display.println("ESP32 Tally");
+  display.println("developed by Jamie K.");
+  display.println("Distributed under the");
+  display.println("MIT License");
+
+  display.display();
+  display.clearDisplay();
+
+#if TALLY_EXTRA_OUTPUT
   // Enable interal led for program trigger
   pinMode(led_program, OUTPUT);
   digitalWrite(led_program, HIGH);
@@ -153,9 +193,8 @@ void setup() {
   digitalWrite(led_preview, HIGH);
   pinMode(led_aux, OUTPUT);
   digitalWrite(led_aux, HIGH);
-  #endif
+#endif
   connectToServer();
-
 }
 
 void loop() {
@@ -180,7 +219,7 @@ void logger(String strLog, String strType) {
 }
 
 void connectToNetwork() {
-  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+  WiFi.mode(WIFI_STA);  // explicitly set mode, esp defaults to STA+AP
 
   logger("Connecting to SSID: " + String(WiFi.SSID()), "info");
 
@@ -195,22 +234,22 @@ void connectToNetwork() {
 
   wm.addParameter(&custom_taServer);
   wm.addParameter(&custom_taPort);
-  
+
   //wm.addParameter(&custom_field);
   wm.setSaveParamsCallback(saveParamCallback);
 
   // custom menu via array or vector
-  std::vector<const char *> menu = {"wifi","param","info","sep","restart","exit"};
+  std::vector<const char *> menu = { "wifi", "param", "info", "sep", "restart", "exit" };
   wm.setMenu(menu);
 
   // set dark theme
   wm.setClass("invert");
 
-  wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
+  wm.setConfigPortalTimeout(120);  // auto close configportal after n seconds
 
   bool res;
 
-  res = wm.autoConnect(listenerDeviceName.c_str()); // AP name for setup
+  res = wm.autoConnect(listenerDeviceName.c_str());  // AP name for setup
 
   if (!res) {
     logger("Failed to connect", "error");
@@ -274,7 +313,6 @@ void saveParamCallback() {
   preferences.putString("taHost", str_taHost);
   preferences.putString("taPort", str_taPort);
   preferences.end();
-
 }
 
 void WiFiEvent(WiFiEvent_t event) {
@@ -311,10 +349,10 @@ void connectToServer() {
   socket.begin(tallyarbiter_host, atol(tallyarbiter_port));
 }
 
-void socket_event(socketIOmessageType_t type, uint8_t * payload, size_t length) {
+void socket_event(socketIOmessageType_t type, uint8_t *payload, size_t length) {
   switch (type) {
     case sIOtype_CONNECT:
-      socket_Connected((char*)payload, length);
+      socket_Connected((char *)payload, length);
       break;
 
     case sIOtype_DISCONNECT:
@@ -326,8 +364,8 @@ void socket_event(socketIOmessageType_t type, uint8_t * payload, size_t length) 
       break;
 
     case sIOtype_EVENT:
-      String msg = (char*)payload;
-      String type = msg.substring(2, msg.indexOf("\"",2));
+      String msg = (char *)payload;
+      String type = msg.substring(2, msg.indexOf("\"", 2));
       String content = msg.substring(type.length() + 4);
       content.remove(content.length() - 1);
 
@@ -336,9 +374,10 @@ void socket_event(socketIOmessageType_t type, uint8_t * payload, size_t length) 
       if (type == "bus_options") BusOptions = JSON.parse(content);
       if (type == "reassign") socket_Reassign(content);
       if (type == "flash") socket_Flash();
+      if (type == "messaging") socket_Messaging(content);
 
       if (type == "deviceId") {
-        DeviceId = content.substring(1, content.length()-1);
+        DeviceId = content.substring(1, content.length() - 1);
         SetDeviceName();
         showDeviceInfo();
       }
@@ -357,7 +396,7 @@ void socket_event(socketIOmessageType_t type, uint8_t * payload, size_t length) 
   }
 }
 
-void socket_Connected(const char * payload, size_t length) {
+void socket_Connected(const char *payload, size_t length) {
   logger("Connected to Tally Arbiter server.", "info");
   logger("DeviceId: " + DeviceId, "info-quiet");
   String deviceObj = "{\"deviceId\": \"" + DeviceId + "\", \"listenerType\": \"" + listenerDeviceName.c_str() + "\", \"canBeReassigned\": true, \"canBeFlashed\": true, \"supportsChat\": true }";
@@ -386,9 +425,9 @@ void socket_Flash() {
 }
 
 void setColor(uint32_t color) {
-  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
-    strip.show();                          //  Update strip to match
+  for (int i = 0; i < strip.numPixels(); i++) {  // For each pixel in strip...
+    strip.setPixelColor(i, color);               //  Set pixel's color (in RAM)
+    strip.show();                                //  Update strip to match
   }
 }
 
@@ -397,14 +436,14 @@ String strip_quot(String str) {
     str.remove(0, 1);
   }
   if (str.endsWith("\"")) {
-    str.remove(str.length()-1, 1);
+    str.remove(str.length() - 1, 1);
   }
   return str;
 }
 
 void socket_Reassign(String payload) {
   String oldDeviceId = payload.substring(0, payload.indexOf(','));
-  String newDeviceId = payload.substring(oldDeviceId.length()+1);
+  String newDeviceId = payload.substring(oldDeviceId.length() + 1);
   newDeviceId = newDeviceId.substring(0, newDeviceId.indexOf(','));
   oldDeviceId = strip_quot(oldDeviceId);
   newDeviceId = strip_quot(newDeviceId);
@@ -429,6 +468,18 @@ void socket_Reassign(String payload) {
   SetDeviceName();
 }
 
+void socket_Messaging(String payload) {
+  String strPayload = String(payload);
+  int typeQuoteIndex = strPayload.indexOf(',');
+  String messageType = strPayload.substring(0, typeQuoteIndex);
+  messageType.replace("\"", "");
+  int messageQuoteIndex = strPayload.lastIndexOf(',');
+  String message = strPayload.substring(messageQuoteIndex + 1);
+  message.replace("\"", "");
+  LastMessage = messageType + ": " + message;
+  evaluateMode();
+}
+
 void processTallyData() {
   bool typeChanged = false;
   for (int i = 0; i < DeviceStates.length(); i++) {
@@ -439,7 +490,7 @@ void processTallyData() {
       actualPriority = getBusPriorityById(JSON.stringify(DeviceStates[i]["busId"]));
     }
   }
-  if(!typeChanged) {
+  if (!typeChanged) {
     actualType = "";
     actualColor = "";
     actualPriority = 0;
@@ -470,7 +521,7 @@ String getBusColorById(String busId) {
 int getBusPriorityById(String busId) {
   for (int i = 0; i < BusOptions.length(); i++) {
     if (JSON.stringify(BusOptions[i]["id"]) == busId) {
-      return (int) JSON.stringify(BusOptions[i]["priority"]).toInt();
+      return (int)JSON.stringify(BusOptions[i]["priority"]).toInt();
     }
   }
 
@@ -492,10 +543,10 @@ void SetDeviceName() {
 }
 
 void evaluateMode() {
-  if(actualType != prevType) {
+  if (actualType != prevType) {
     actualColor.replace("#", "");
     String hexstring = actualColor;
-    long number = (long) strtol( &hexstring[1], NULL, 16);
+    long number = (long)strtol(&hexstring[1], NULL, 16);
     int r = number >> 16;
     int g = number >> 8 & 0xFF;
     int b = number & 0xFF;
@@ -504,29 +555,39 @@ void evaluateMode() {
     } else {
       setColor(BLACK);
     }
-    
-    #if TALLY_EXTRA_OUTPUT
+
+#if TALLY_EXTRA_OUTPUT
     if (actualType == "preview") {
       digitalWrite(led_program, HIGH);
-      digitalWrite (led_preview, LOW);
-      digitalWrite (led_aux, LOW);
+      digitalWrite(led_preview, LOW);
+      digitalWrite(led_aux, LOW);
     } else if (actualType == "preview") {
       digitalWrite(led_program, LOW);
-      digitalWrite (led_preview, HIGH);
-      digitalWrite (led_aux, LOW);
+      digitalWrite(led_preview, HIGH);
+      digitalWrite(led_aux, LOW);
     } else if (actualType == "aux") {
       digitalWrite(led_program, LOW);
-      digitalWrite (led_preview, LOW);
-      digitalWrite (led_aux, HIGH);
+      digitalWrite(led_preview, LOW);
+      digitalWrite(led_aux, HIGH);
     } else {
       digitalWrite(led_program, LOW);
-      digitalWrite (led_preview, LOW);
-      digitalWrite (led_aux, LOW);
+      digitalWrite(led_preview, LOW);
+      digitalWrite(led_aux, LOW);
     }
-    #endif
+#endif
 
     logger("Device is in " + actualType + " (color " + actualColor + " r: " + String(r) + " g: " + String(g) + " b: " + String(b) + " - priority " + String(actualPriority) + ")", "info");
 
     prevType = actualType;
+  }
+  if (LAST_MSG == true) {    
+   if (LastMessage.indexOf('@') >= 0) { // Only sends message if it contains @. Means that the tally only receives directions and not conversations or replies in the messages system.
+    display.clearDisplay();
+    display.setCursor(0, 1);
+    display.setTextColor(SH110X_WHITE);
+    display.println(LastMessage);
+    Serial.println(LastMessage);
+    display.display();
+   }
   }
 }
