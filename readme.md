@@ -37,13 +37,12 @@ Learn more [here](https://github.com/josephdadams/TallyArbiter).
 
 ### 3D Printing
 Use the seperate 3mf files in the CAD folder for printing.
-The stl files seperate the top and bottom peices. 
 I printed my case in PLA and it has been working fine.
-The top peice is to be printed in white to act as diffusion for the LEDs.
+The top piece is to be printed in white to act as diffusion for the LEDs.
 #### Recommended print settings
 - 3 permiters
-- 15% infill for the bottom peice
-- No infill or solid infill for the top peice. This is to ensure the LED diffusion is smooth.
+- 15% infill for the bottom piece
+- No infill or solid infill for the top piece. This is to ensure the LED diffusion is smooth.
 - The coldshoe mount should be printed with the tally connector face facing the built plate. Supports may be needed.
 
 ### Wiring
@@ -64,10 +63,10 @@ Use a soldering iron to melt the heated inserts into the holes in between the tw
 The screen can be placed into its compartment. Use some hot glue to secure it in place if necessary.
 The ESP32 can slide in on an angle before being pushed against the back of the case to hold it in place.
 The neopixels sit above the ESP32.
-Use the appropriately sized hex key to screw the grub screws into the heated inserts, attaching the two peices of the case.
+Use the appropriately sized hex key to screw the grub screws into the heated inserts, attaching the two pieces of the case.
 
 ## Making your own accessories
-Accessories can be connected using this template:
+Accessories can be connected using this template for the heated inserts alignment:
 ![Alt text](<Images/Accessory Template.png>)
 
 ## License
