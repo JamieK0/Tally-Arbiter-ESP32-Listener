@@ -54,6 +54,15 @@ The top peice is to be printed in white to act as diffusion for the LEDs.
 
 ### Programing the ESP32
 Use the Ardunio IDE to program the ESP32. This [tutorial](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/) is helpful for installing ESP32 boards in the IDE.
+The Arduino IDE sketch file is in the esp32-neopixel-listener folder.
+
+### Building the case
+Use a soldering iron to melt the heated inserts into the holes in between the two parts of the case. Add heated inserts to the accessory attachment points as well.
+The screen can be placed into its compartment. Use some hot glue to secure it in place if necessary.
+The ESP32 can slide in on an angle before being pushed against the back of the case to hold it in place.
+The neopixels sit above the ESP32.
+Use the appropriately sized hex key to screw the grub screws into the heated inserts, attaching the two peices of the case.
+
 
 
 ## License
