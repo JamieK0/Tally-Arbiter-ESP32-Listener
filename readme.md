@@ -68,7 +68,7 @@ Use the appropriately sized hex key to screw the grub screws into the heated ins
 
 ## Making your own accessories
 Accessories can be connected using this template:
-![Alt text](<Accessory Template.png>)
+![Alt text](<Images/Accessory Template.png>)
 
 ## License
 Distributed under the MIT License.
