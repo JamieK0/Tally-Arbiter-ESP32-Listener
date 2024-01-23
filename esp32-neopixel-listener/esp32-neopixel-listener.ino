@@ -17,9 +17,9 @@ String listenerDeviceName = "neoPixel-1";
 /* USER CONFIG VARIABLES
  *  Change the following variables before compiling and sending the code to your device.
  */
-#define LED_PIN 5
+#define LED_PIN 18
 #define BRIGHTNESS 255  // Set BRIGHTNESS to about 1/5 (max = 255)
-#define LED_COUNT 2
+#define LED_COUNT 6
 #define maxTextSize 5  //larger sourceName text
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -173,12 +173,14 @@ void setup() {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
-  display.setCursor(0, 0);
+  display.setCursor(0, 1);
   display.println("Tally Arbiter");
-  display.println("developed by Joseph Adams.");
-  display.println("ESP32 Listener with");
-  display.println("OLED developed by Jamie K.");
-  display.println("Distributed under the MIT License");
+  display.println("developed by Joseph");
+  display.println("Adams.");
+  display.println("ESP32 Tally");
+  display.println("developed by Jamie K.");
+  display.println("Distributed under the");
+  display.println("MIT License");
 
   display.display();
   display.clearDisplay();
@@ -579,9 +581,9 @@ void evaluateMode() {
     prevType = actualType;
   }
   if (LAST_MSG == true) {    
-   if (LastMessage.indexOf('@') >= 0) {
+   if (LastMessage.indexOf('@') >= 0) { // Only sends message if it contains @. Means that the tally only receives directions and not conversations or replies in the messages system.
     display.clearDisplay();
-    display.setCursor(0, 0);
+    display.setCursor(0, 1);
     display.setTextColor(SH110X_WHITE);
     display.println(LastMessage);
     Serial.println(LastMessage);
