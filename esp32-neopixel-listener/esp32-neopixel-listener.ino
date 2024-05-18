@@ -43,7 +43,7 @@ const int led_aux = 36;      //OPTIONAL Led for aux on pin G36
 bool LAST_MSG = true;  // true = show log on tally screen
 
 //Tally Arbiter Server
-char tallyarbiter_host[40] = "192.168.0.120";  //IP address of the Tally Arbiter Server
+char tallyarbiter_host[40] = "192.168.0.20";  //IP address of the Tally Arbiter Server
 char tallyarbiter_port[6] = "4455";
 
 /* END OF USER CONFIG */
