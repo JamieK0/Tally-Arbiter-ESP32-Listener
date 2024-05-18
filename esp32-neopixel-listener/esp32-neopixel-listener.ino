@@ -17,9 +17,9 @@ String listenerDeviceName = "neoPixel-1";
 /* USER CONFIG VARIABLES
  *  Change the following variables before compiling and sending the code to your device.
  */
-#define LED_PIN 18
+#define LED_PIN 4
 #define BRIGHTNESS 255  // Set BRIGHTNESS to about 1/5 (max = 255)
-#define LED_COUNT 6
+#define LED_COUNT 7
 #define maxTextSize 5  //larger sourceName text
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -54,8 +54,12 @@ char tallyarbiter_port[6] = "4455";
 //#define i2c_Address 0x3d //initialize with the I2C addr 0x3D Typically Adafruit OLED's
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
 #define SCREEN_HEIGHT 64  // OLED display height, in pixels
-#define OLED_RESET -1     //   QT-PY / XIAO
-Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#define OLED_MOSI     23
+#define OLED_CLK      18
+#define OLED_DC       21
+#define OLED_CS       5
+#define OLED_RST      15
+Adafruit_SH1106G display = Adafruit_SH1106G(128, 64,OLED_MOSI, OLED_CLK, OLED_DC, OLED_RST, OLED_CS);
 
 
 Preferences preferences;
