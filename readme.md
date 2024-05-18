@@ -21,7 +21,7 @@ Learn more [here](https://github.com/josephdadams/TallyArbiter).
 - ESP32 development board
 - 1.3 inch i2c OLED screen
 - 6x neopixel LEDs
-- 14x M3 4mm length heated inserts
+- 14x M3 4mm length (OD 4.5mm) heated inserts
 - 6x M3 16mm hex socket grubscrews
 - Black PLA filament
 - White PLA filament
