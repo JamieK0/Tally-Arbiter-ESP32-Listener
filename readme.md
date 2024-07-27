@@ -1,7 +1,8 @@
 # ESP32 Listener/Tally Light with OLED and Neopixels
 An ESP32 listener for Tally Arbiter.
-![Alt text](Images/IMG_9970.JPG)
 ![Alt text](Images/IMG_9926.png)
+![Alt text](Images/IMG_2181.jpg)
+![Alt text](Images/IMG_9970.JPG)
 ![Alt text](Images/IMG_9930.jpeg)
 
 ## Features
